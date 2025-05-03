@@ -1,1 +1,3 @@
 # ProgettoTIAGoRobotica
+
+- Alessandro Di Filippo
