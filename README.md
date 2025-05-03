@@ -1,4 +1,4 @@
 # ProgettoTIAGoRobotica
 
 - Alessandro Di Filippo
-- -Dario PAttumelli (forza Roma)
+- -Dario Pattumelli (forza Roma)
