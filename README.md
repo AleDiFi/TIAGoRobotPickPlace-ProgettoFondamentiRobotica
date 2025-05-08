@@ -7,7 +7,7 @@ Con questo Progetto si è sviluppato un framework di simulazione che consente al
 ### Tools & conoscenze richieste per lo sviluppo del Progetto:
 ROS 2, simulatore Rviz e Gazebo, Basi di Robotica, Intelligenza Artificiale e ArUcomarker.
 
-###Sfide principali:
+### Sfide principali:
 *Task 1:* 
 	Modellazione di robot in Gazebo
 	Localizzazione di oggetti
