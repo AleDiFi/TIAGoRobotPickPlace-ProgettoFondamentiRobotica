@@ -10,6 +10,8 @@ class TiagoHeadScanPublisher(Node):
         self.direction = 1 
         self.completed = False
         self.timer = self.create_timer(2, self.send_trajectory)
+        self.log_printed = False
+
         
 
     def send_trajectory(self):
@@ -25,8 +27,11 @@ class TiagoHeadScanPublisher(Node):
             point.time_from_start.sec = 2
             traj.points.append(point)
             self.publisher_.publish(traj)
-            self.get_logger().info("Scan completato")
+            if not self.log_printed:
+                self.get_logger().info("Scan completato")
+                self.log_printed = True
             return
+
         
         head_1_value = self.direction * 0.217 
         head_2_value = -0.57

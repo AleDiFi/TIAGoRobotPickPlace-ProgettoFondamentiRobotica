@@ -1,0 +1,31 @@
+{
+    "ros.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/lorenzo/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/tiago_scan/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/tiago_description/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/tiago_control/lib/python3.10/site-packages",
+        "/home/lorenzo/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages",
+        "/home/lorenzo/ros2_ws/install/my_py_pkg/lib/python3.10/site-packages",
+        "/home/lorenzo/ros2_ws/install/my_robot_interfaces/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/ros2_ws/install/aruco_py_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/lorenzo/tiago_public_ws/install/urdf_test/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/tiago_scan/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/tiago_description/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/tiago_control/lib/python3.10/site-packages",
+        "/home/lorenzo/tiago_public_ws/install/pmb2_description/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/play_motion2_msgs/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/tiago_public_ws/install/launch_pal/lib/python3.10/site-packages",
+        "/home/lorenzo/ros2_ws/install/my_py_pkg/lib/python3.10/site-packages",
+        "/home/lorenzo/ros2_ws/install/my_robot_interfaces/local/lib/python3.10/dist-packages",
+        "/home/lorenzo/ros2_ws/install/aruco_py_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
