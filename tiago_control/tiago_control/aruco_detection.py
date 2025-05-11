@@ -40,7 +40,7 @@ class ArucoPoseEstimator(Node):
         self.create_subscription(CameraInfo, '/head_front_camera/rgb/camera_info', self.camera_info_callback, 10)
         self.create_subscription(Image, '/head_front_camera/rgb/image_raw', self.image_callback, 10)
 
-        # Timer per ripubblicare le ultime pose rilevate ogni 10 secondi
+        # Timer per ripubblicare le ultime pose rilevate ogni 1 secondi
         self.timer = self.create_timer(1.0, self.publish_last_poses)
         self.get_logger().info("Aruco Pose Estimator Avviato")
 
@@ -74,7 +74,12 @@ class ArucoPoseEstimator(Node):
                         self.detected_ids.append(marker_id)
                         self.get_logger().info(f"Marker {marker_id} aggiunto alla lista dei rilevati.")
                     else:
-                        self.get_logger().warn(f"Superato il numero massimo di marker ({self.max_markers}). Marker {marker_id} ignorato.")
+                        self.get_logger().info(
+                            f"\n📍 Marker ID: {marker_id}\n"
+                            f"   ➤ Posizione (x, y, z): [{tvec[0]:.3f}, {tvec[1]:.3f}, {tvec[2]:.3f}]\n"
+                            f"   ➤ Rotazione (rvec):   [{rvec[0]:.3f}, {rvec[1]:.3f}, {rvec[2]:.3f}]\n"
+                            "--------------------------------------------------"
+                        )
                         continue
 
                 if marker_id in self.pose_publishers:
@@ -88,11 +93,17 @@ class ArucoPoseEstimator(Node):
                     transformed_pose_msg = self.build_transform_pose(pose_msg, msg.header.stamp, quat)
                     if marker_id in self.transformed_pose_publishers:
                         self.transformed_pose_publishers[marker_id].publish(transformed_pose_msg)
-                        self.last_transformed_poses[marker_id] = pose_msg
-                        self.get_logger().info(f"Trasformazione completata: posizione {transformed_pose_msg.pose.position}, orientamento {transformed_pose_msg.pose.orientation}\n")
+                        self.last_transformed_poses[marker_id] = transformed_pose_msg
+                        tp = transformed_pose_msg.pose.position
+                        to = transformed_pose_msg.pose.orientation
+                        self.get_logger().info(
+                            f"\n🔄 Trasformazione Marker ID: {marker_id}\n"
+                            f"   ➤ Posizione trasformata (x, y, z): [{tp.x:.3f}, {tp.y:.3f}, {tp.z:.3f}]\n"
+                            f"   ➤ Orientamento (quaternione):      [x: {to.x:.3f}, y: {to.y:.3f}, z: {to.z:.3f}, w: {to.w:.3f}]\n"
+                            "---Roger-Roger------------------------------------"
+                        )
 
-                
-                cv2.drawFrameAxes(frame, self.camera_matrix, self.dist_coeffs, rvecs[0], tvecs[0], self.marker_size / 2) # disegna un sistema di assi 3D (X, Y, Z) sopra il marker, basato sulla posa stimata
+                cv2.drawFrameAxes(frame, self.camera_matrix, self.dist_coeffs, rvecs[i], tvecs[i], self.marker_size / 2) # disegna un sistema di assi 3D (X, Y, Z) sopra il marker, basato sulla posa stimata
 
         # Mostra l'immagine con i marker rilevati
         cv2.imshow("Aruco Detection", frame)
@@ -104,7 +115,7 @@ class ArucoPoseEstimator(Node):
                 self.pose_publishers[marker_id].publish(pose)
         for marker_id, transformed_pose in self.last_transformed_poses.items():
             if marker_id in self.pose_publishers:
-                self.pose_publishers[marker_id].publish(transformed_pose)
+                self.transformed_pose_publishers[marker_id].publish(transformed_pose)
 
     def build_pose_stamped(self, tvec, rvec, stamp_ros2):
         pose = PoseStamped()
