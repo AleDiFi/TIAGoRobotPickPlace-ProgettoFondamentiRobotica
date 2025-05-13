@@ -11,7 +11,7 @@ def generate_launch_description():
         ),
         Node(
             package='tiago_control',
-            executable='tiago_head_scan_publisher',
+            executable='tiago_head_scan',
             #name='TiagoHeadScanPublisher',
         )
     ])

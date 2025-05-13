@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'tiago_head_scan_publisher = tiago_control.tiago_head_scan_publisher:main',
+            'tiago_head_scan = tiago_control.tiago_head_scan:main',
             'aruco_detection = tiago_control.aruco_detection:main',
         ],
     },
