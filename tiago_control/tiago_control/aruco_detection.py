@@ -9,36 +9,39 @@ from scipy.spatial.transform import Rotation as R
 import tf2_ros
 
 class ArucoPoseEstimator(Node):
+    """ classe per stimare la posa di marker ArUco e pubblicare le pose trasformate """
     def __init__(self):
-        super().__init__('aruco_pose_estimator')
+        super().__init__('aruco_pose_estimator') 
 
-        self.bridge = CvBridge()
-        self.marker_size = 0.06  # Marker size in meters
+        self.bridge = CvBridge() # Converte le immagini ROS in OpenCV
+        self.marker_size = 0.06  # Marker size in metri
 
-        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
-        self.aruco_params = cv2.aruco.DetectorParameters()
+        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250) 
+        self.aruco_params = cv2.aruco.DetectorParameters() 
 
         self.camera_matrix = None
         self.dist_coeffs = None
 
-        self.detected_ids = []
-        self.pose_publishers = {}
+        self.detected_ids = [] # Lista per tenere traccia degli ID dei marker rilevati
+        self.pose_publishers = {} #dizionario per i publisher delle pose
         self.transformed_pose_publishers = {}  # Nuovo dizionario per i publisher delle pose trasformate
-        self.last_poses = {}
+        self.last_poses = {} # Dizionario per le ultime pose rilevate
         self.last_transformed_poses = {}  # Dizionario per le pose trasformate
 
         self.max_markers = 4
         for i in range(self.max_markers):
-            pose_topic = f'/aruco_marker/ID{i+1}/pose'
-            transformed_pose_topic = f'/aruco_marker/ID{i+1}/transformed_pose'
+            pose_topic = f'/aruco_marker/ID{i+1}/pose' # topic per la posa del marker
+            transformed_pose_topic = f'/aruco_marker/ID{i+1}/transformed_pose' # topic per la posa trasformata
 
-            self.pose_publishers[i+1] = self.create_publisher(PoseStamped, pose_topic, 10)
-            self.transformed_pose_publishers[i+1] = self.create_publisher(PoseStamped, transformed_pose_topic, 10)
+        
+        """creazione dei publisher per le pose e le pose trasformate"""
 
-            self.get_logger().info(f"Publisher pre-creato per marker {i+1} su {pose_topic} e {transformed_pose_topic}")
+        self.pose_publishers[i+1] = self.create_publisher(PoseStamped, pose_topic, 10) # publisher per la posa
+        self.transformed_pose_publishers[i+1] = self.create_publisher(PoseStamped, transformed_pose_topic, 10) # publisher per la posa trasformata
 
-        self.create_subscription(CameraInfo, '/head_front_camera/rgb/camera_info', self.camera_info_callback, 10)
-        self.create_subscription(Image, '/head_front_camera/rgb/image_raw', self.image_callback, 10)
+        self.get_logger().info(f"Publisher pre-creato per marker {i+1} su {pose_topic} e {transformed_pose_topic}") #publisher per la posa e la posa trasformata
+        self.create_subscription(CameraInfo, '/head_front_camera/rgb/camera_info', self.camera_info_callback, 10) #subscription per le informazioni della camera
+        self.create_subscription(Image, '/head_front_camera/rgb/image_raw', self.image_callback, 10) #subscription per le immagini della camera
 
         # Timer per ripubblicare le ultime pose rilevate ogni 1 secondi
         self.timer = self.create_timer(1.0, self.publish_last_poses)
@@ -49,28 +52,39 @@ class ArucoPoseEstimator(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
     def camera_info_callback(self, msg):
+
+        """ funzione di callback per le informazioni della camera. 
+        Riceve le informazioni della camera e le memorizza nella matrice della camera e nei coefficienti di distorsione """
         if self.camera_matrix is None:
-            self.camera_matrix = np.array(msg.k).reshape(3, 3)
+            self.camera_matrix = np.array(msg.k).reshape(3, 3) 
             self.dist_coeffs = np.array(msg.d)
             self.get_logger().info("Camera info ricevuto")
 
     def image_callback(self, msg):
+
+        """ funzione di callback per le immagini.
+        Riceve le immagini dalla camera e rileva i marker ArUco.
+        Se i marker sono stati rilevati, calcola la posa e la pubblica """
         if self.camera_matrix is None:
             self.get_logger().warn("Camera info non ricevuto, non posso processare le immagini")
             return
 
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        corners, ids, _ = cv2.aruco.detectMarkers(frame, self.aruco_dict, parameters=self.aruco_params)
+        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8') # Converte l'immagine ROS in un'immagine OpenCV
+        corners, ids, _ = cv2.aruco.detectMarkers(frame, self.aruco_dict, parameters=self.aruco_params) # Rileva i marker ArUco nell'immagine
 
         if ids is not None:
-            cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+            cv2.aruco.drawDetectedMarkers(frame, corners, ids) # Disegna i marker rilevati nell'immagine
 
             
-            rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, self.marker_size, self.camera_matrix, self.dist_coeffs)
-            
-            for i, marker_id in enumerate(ids.flatten()):
+            rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, self.marker_size, self.camera_matrix, self.dist_coeffs)# Stima la posa dei marker rilevati
+            """ rvecs e tvecs sono le rotazioni e le traslazioni stimate per ogni marker """
+
+
+            for i, marker_id in enumerate(ids.flatten()): 
                 if marker_id not in self.detected_ids:
-                    if len(self.detected_ids) < self.max_markers:
+                    """se il marker è già stato rilevato, non lo aggiungere alla lista dei rilevati"""
+
+                    if len(self.detected_ids) < self.max_markers: 
                         self.detected_ids.append(marker_id)
                         self.get_logger().info(f"Marker {marker_id} aggiunto alla lista dei rilevati.")
                     else:
@@ -82,20 +96,22 @@ class ArucoPoseEstimator(Node):
                         )
                         continue
 
-                if marker_id in self.pose_publishers:
+                if marker_id in self.pose_publishers: 
+                    """se il marker è già stato rilevato e il publisher è stato creato, pubblica la posa"""
                     rvec = rvecs[i][0]
                     tvec = tvecs[i][0]
-                    pose_msg, quat = self.build_pose_stamped(tvec, rvec, msg.header.stamp)
-                    self.last_poses[marker_id] = pose_msg
-                    self.pose_publishers[marker_id].publish(pose_msg)
-                    self.get_logger().info(f"Marker {marker_id} rilevato: posizione {tvec}, orientamento {rvec}\n")
+                    pose_msg, quat = self.build_pose_stamped(tvec, rvec, msg.header.stamp) # Crea il messaggio PoseStamped
+                    self.last_poses[marker_id] = pose_msg # memorizza l'ultima posa rilevata
+                    self.pose_publishers[marker_id].publish(pose_msg) # pubblica la posa
+                    self.get_logger().info(f"Marker {marker_id} rilevato: posizione {tvec}, orientamento {rvec}\n") #  stampa la posa
                     
-                    transformed_pose_msg = self.build_transform_pose(pose_msg, msg.header.stamp, quat)
+                    transformed_pose_msg = self.build_transform_pose(pose_msg, msg.header.stamp, quat) # Crea il messaggio PoseStamped trasformato
                     if marker_id in self.transformed_pose_publishers:
-                        self.transformed_pose_publishers[marker_id].publish(transformed_pose_msg)
-                        self.last_transformed_poses[marker_id] = transformed_pose_msg
-                        tp = transformed_pose_msg.pose.position
-                        to = transformed_pose_msg.pose.orientation
+                        # se il publisher per la posa trasformata è stato creato, pubblica la posa trasformata
+                        self.transformed_pose_publishers[marker_id].publish(transformed_pose_msg) # pubblica la posa trasformata
+                        self.last_transformed_poses[marker_id] = transformed_pose_msg # memorizza l'ultima posa trasformata
+                        tp = transformed_pose_msg.pose.position # posizione trasformata
+                        to = transformed_pose_msg.pose.orientation # orientamento trasformato
                         self.get_logger().info(
                             f"\n🔄 Trasformazione Marker ID: {marker_id}\n"
                             f"   ➤ Posizione trasformata (x, y, z): [{tp.x:.3f}, {tp.y:.3f}, {tp.z:.3f}]\n"
@@ -103,14 +119,18 @@ class ArucoPoseEstimator(Node):
                             "---Roger-Roger------------------------------------"
                         )
 
-                cv2.drawFrameAxes(frame, self.camera_matrix, self.dist_coeffs, rvecs[i], tvecs[i], self.marker_size / 2) # disegna un sistema di assi 3D (X, Y, Z) sopra il marker, basato sulla posa stimata
+                cv2.drawFrameAxes(frame, self.camera_matrix, self.dist_coeffs, rvecs[i], tvecs[i], self.marker_size / 2) 
+                # disegna un sistema di assi 3D (X, Y, Z) sopra il marker, basato sulla posa stimata
 
         # Mostra l'immagine con i marker rilevati
         cv2.imshow("Aruco Detection", frame)
         cv2.waitKey(1)
 
     def publish_last_poses(self):
+        """ funzione per pubblicare le ultime pose rilevate ogni secondo """
+
         for marker_id, pose in self.last_poses.items():
+            """se il marker è già stato rilevato e il publisher è stato creato, pubblica la posa"""
             if marker_id in self.pose_publishers:
                 self.pose_publishers[marker_id].publish(pose)
         for marker_id, transformed_pose in self.last_transformed_poses.items():
@@ -118,6 +138,7 @@ class ArucoPoseEstimator(Node):
                 self.transformed_pose_publishers[marker_id].publish(transformed_pose)
 
     def build_pose_stamped(self, tvec, rvec, stamp_ros2):
+        """ funzione per costruire il messaggio PoseStamped """
         pose = PoseStamped()
         pose.header.frame_id = 'head_front_camera_color_optical_frame'
         pose.header.stamp = stamp_ros2
@@ -139,7 +160,8 @@ class ArucoPoseEstimator(Node):
         return pose, quat
 
     def build_transform_pose(self, pose, stamp_ros2, quat):
-
+        
+        """ funzione per costruire il messaggio PoseStamped trasformato """
         try:
             transformed_pose = PoseStamped()
             transformed_pose.header.frame_id = "base_footprint"

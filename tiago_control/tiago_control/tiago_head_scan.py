@@ -5,9 +5,12 @@ from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 class TiagoHeadScanActionClient(Node):
+
+    "client per il movimento della testa di Tiago in scan"
+
     def __init__(self):
         super().__init__('tiago_head_scan_action_client')
-        self._action_client = ActionClient(self, FollowJointTrajectory, '/head_controller/follow_joint_trajectory')
+        self._action_client = ActionClient(self, FollowJointTrajectory, '/head_controller/follow_joint_trajectory') 
         self.trajectory_index = 0
         self.trajectories = self.create_trajectories()
         self.send_next_goal()
@@ -27,11 +30,12 @@ class TiagoHeadScanActionClient(Node):
         trajectories = []
 
         for pos in head_positions:
-            goal_msg = FollowJointTrajectory.Goal()
-            goal_msg.trajectory.joint_names = joint_names
+            """Genera un messaggio di traiettoria per ogni posizione della testa."""
+            goal_msg = FollowJointTrajectory.Goal() #goal message
+            goal_msg.trajectory.joint_names = joint_names #messaggio di traiettoria
 
-            point = JointTrajectoryPoint()
-            point.positions = pos
+            point = JointTrajectoryPoint() #messaggio di punto della traiettoria
+            point.positions = pos #posizione della testa 
             point.time_from_start.sec = 2
 
             goal_msg.trajectory.points.append(point)
@@ -40,28 +44,36 @@ class TiagoHeadScanActionClient(Node):
         return trajectories
 
     def send_next_goal(self):
-        if self.trajectory_index >= len(self.trajectories):
-            self.get_logger().info('Scan completato.')
+        """Invia il  goal alla testa di Tiago."""
+        if self.trajectory_index >= len(self.trajectories): #se sono state inviate  le traiettorie
+            self.get_logger().info('Scan completato.') 
             return
+        
 
-        goal_msg = self.trajectories[self.trajectory_index]
-        self._action_client.wait_for_server()
-        self.get_logger().info(f'Invio traiettoria {self.trajectory_index + 1}...')
-        self._send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+        goal_msg = self.trajectories[self.trajectory_index] 
+        self._action_client.wait_for_server() #aspetta il server
+        self.get_logger().info(f'Invio traiettoria {self.trajectory_index + 1}...') 
+        self._send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback) 
         self._send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
+
+        """Callback per la risposta del goal."""
         goal_handle = future.result()
         if not goal_handle.accepted:
+
+            #se il goal non è accettato
             self.get_logger().warning('Goal rifiutato.')
             return
 
-        self.get_logger().info('Goal accettato. \n R0G3R-----R0G3R')
-        self._get_result_future = goal_handle.get_result_async()
+        self.get_logger().info('Goal accettato. \n R0G3R-----R0G3R') 
+        self._get_result_future = goal_handle.get_result_async() # ottieni il risultato
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
-        result = future.result().result
+
+        """Callback per il risultato del goal."""
+        result = future.result().result 
         self.get_logger().info(f'Traiettoria {self.trajectory_index + 1} completata.')
         self.trajectory_index += 1
         self.send_next_goal()
