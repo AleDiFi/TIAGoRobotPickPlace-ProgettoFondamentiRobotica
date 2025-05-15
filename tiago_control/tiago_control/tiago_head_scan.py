@@ -44,7 +44,8 @@ class TiagoHeadScanActionClient(Node):
         return trajectories
 
     def send_next_goal(self):
-        """Invia il  goal alla testa di Tiago."""
+        """Invia il  goal alla testa di Tiago.
+        Se sono state inviate tutte le traiettorie, termina l'azione."""
         if self.trajectory_index >= len(self.trajectories): #se sono state inviate  le traiettorie
             self.get_logger().info('Scan completato.') 
             return
@@ -58,7 +59,9 @@ class TiagoHeadScanActionClient(Node):
 
     def goal_response_callback(self, future):
 
-        """Callback per la risposta del goal."""
+        """Callback per la risposta del goal
+            input: future. future è un oggetto che rappresenta il risultato di un'operazione asincrona
+            output: goal_handle"""
         goal_handle = future.result()
         if not goal_handle.accepted:
 
@@ -72,14 +75,18 @@ class TiagoHeadScanActionClient(Node):
 
     def get_result_callback(self, future):
 
-        """Callback per il risultato del goal."""
+        """Callback per il risultato del goal.
+            input: future. future è un oggetto che rappresenta il risultato di un'operazione asincrona
+            output: result"""
         result = future.result().result 
         self.get_logger().info(f'Traiettoria {self.trajectory_index + 1} completata.')
         self.trajectory_index += 1
         self.send_next_goal()
 
     def feedback_callback(self, feedback_msg):
-        """Callback per ricevere il feedback della traiettoria."""
+        """Callback per ricevere il feedback della traiettoria.
+            input: feedback_msg. feedback_msg è un oggetto che rappresenta il messaggio di feedback
+            output: feedback_msg"""
         self.get_logger().info(f'Feedback ricevuto per traiettoria {self.trajectory_index + 1}.')
         desired = feedback_msg.feedback.desired.positions
         actual = feedback_msg.feedback.actual.positions

@@ -54,7 +54,9 @@ class ArucoPoseEstimator(Node):
     def camera_info_callback(self, msg):
 
         """ funzione di callback per le informazioni della camera. 
-        Riceve le informazioni della camera e le memorizza nella matrice della camera e nei coefficienti di distorsione """
+        Riceve le informazioni della camera e le memorizza nella matrice della camera e nei coefficienti di distorsione 
+        
+        input: msg: CameraInfo"""
         if self.camera_matrix is None:
             self.camera_matrix = np.array(msg.k).reshape(3, 3) 
             self.dist_coeffs = np.array(msg.d)
@@ -64,7 +66,9 @@ class ArucoPoseEstimator(Node):
 
         """ funzione di callback per le immagini.
         Riceve le immagini dalla camera e rileva i marker ArUco.
-        Se i marker sono stati rilevati, calcola la posa e la pubblica """
+        Se i marker sono stati rilevati, calcola la posa e la pubblica 
+        
+        input: msg: Image"""
         if self.camera_matrix is None:
             self.get_logger().warn("Camera info non ricevuto, non posso processare le immagini")
             return
@@ -127,8 +131,8 @@ class ArucoPoseEstimator(Node):
         cv2.waitKey(1)
 
     def publish_last_poses(self):
-        """ funzione per pubblicare le ultime pose rilevate ogni secondo """
-
+        """ funzione per pubblicare le ultime pose rilevate ogni secondo 
+        input: self: ArucoPoseEstimator"""
         for marker_id, pose in self.last_poses.items():
             """se il marker è già stato rilevato e il publisher è stato creato, pubblica la posa"""
             if marker_id in self.pose_publishers:
@@ -138,8 +142,11 @@ class ArucoPoseEstimator(Node):
                 self.transformed_pose_publishers[marker_id].publish(transformed_pose)
 
     def build_pose_stamped(self, tvec, rvec, stamp_ros2):
-        """ funzione per costruire il messaggio PoseStamped """
-        pose = PoseStamped()
+        """ funzione per costruire il messaggio PoseStamped 
+        input: tvec: traslazione del marker
+               rvec: rotazione del marker
+               stamp_ros2: timestamp ROS2
+        output: pose: messaggio PoseStamped"""
         pose.header.frame_id = 'head_front_camera_color_optical_frame'
         pose.header.stamp = stamp_ros2
 
@@ -161,7 +168,11 @@ class ArucoPoseEstimator(Node):
 
     def build_transform_pose(self, pose, stamp_ros2, quat):
         
-        """ funzione per costruire il messaggio PoseStamped trasformato """
+        """ funzione per costruire il messaggio PoseStamped trasformato 
+        input: pose: messaggio PoseStamped
+               stamp_ros2: timestamp ROS2
+               quat: quaternione del marker
+        output: transformed_pose: messaggio PoseStamped trasformato"""
         try:
             transformed_pose = PoseStamped()
             transformed_pose.header.frame_id = "base_footprint"
