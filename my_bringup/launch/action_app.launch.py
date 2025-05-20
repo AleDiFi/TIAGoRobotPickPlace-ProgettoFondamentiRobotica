@@ -3,8 +3,7 @@ from launch_ros.actions import Node
 from launch.actions import ExecuteProcess, TimerAction
 
 def generate_launch_description():
-     """lauch file per il nodo di rilevazione degli Aruco marker e il nodo di scansione della testa del Tiago"""
-      # Nodo per la rilevazione degli Aruco marker
+    # Nodo per la rilevazione degli Aruco marker
     aruco_detection_node = Node(
         package='tiago_control',
         executable='aruco_detection', 

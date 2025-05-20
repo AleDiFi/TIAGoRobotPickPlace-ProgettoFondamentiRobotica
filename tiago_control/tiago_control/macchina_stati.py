@@ -46,10 +46,10 @@ class Sequencer(Node):
             # Controlla se i processi sono terminati
             # e se il timeout è scaduto
 
-            aruco_done = self.aruco_proc.poll() is not None
+            # aruco_done = self.aruco_proc.poll() is not None
             head_done = self.head_proc.poll() is not None
-            timeout_expired = now - self.start_time > self.aruco_timeout_sec
-            self.get_logger().info(f'Head done: {head_done}, Aruco done: {aruco_done}, Timeout expired: {timeout_expired}')
+            # timeout_expired = now - self.start_time > self.aruco_timeout_sec
+            self.get_logger().info(f'Head done: {head_done}')
 
             '''
             now: è il tempo corrente in secondi (ottenuto con time.time())
@@ -58,15 +58,7 @@ class Sequencer(Node):
             self.aruco_timeout_sec: è il timeout massimo che vuoi aspettare (in secondi), es. 15
             '''
 
-            if timeout_expired: #head_done and (aruco_done or timeout_expired):
-                if not aruco_done:
-                    self.get_logger().warn('Timeout Aruco detection. Terminazione forzata.')
-                    self.aruco_proc.terminate()
-                    try:
-                        self.aruco_proc.wait(timeout=2)
-                    except:
-                        self.get_logger().warn('Kill Aruco detection.')
-                        self.aruco_proc.kill()
+            if head_done: #head_done and (aruco_done or timeout_expired):
 
                 self.get_logger().info('Aruco + Head scan completati. Avvio torso...')
                 self.torso_proc = Popen([
@@ -74,6 +66,11 @@ class Sequencer(Node):
                     '/torso_controller/follow_joint_trajectory',
                     'control_msgs/action/FollowJointTrajectory',
                     '{"trajectory": {"joint_names": ["torso_lift_joint"], "points": [{"positions": [0.35], "time_from_start": {"sec": 3}}]}}'
+                ])
+                self.intermediate_arm_proc = Popen(['ros2', 'action', 'send_goal',
+                    '/arm_controller/follow_joint_trajectory',
+                    'control_msgs/action/FollowJointTrajectory',
+                    '{"trajectory": {"joint_names": ["arm_1_joint", "arm_2_joint", "arm_3_joint", "arm_4_joint", "arm_5_joint", "arm_6_joint", "arm_7_joint"], "points": [{"positions": [0.0003836728901962516, -0.0001633239063343339, -9.037018213753356e-06, -6.145563957549172e-05, 4.409014973383307e-05, 0.0019643255648595925, 0.0004167305736686444], "time_from_start": {"sec": 3}}]}}'
                 ])
                 self.state = State.TORSO
 

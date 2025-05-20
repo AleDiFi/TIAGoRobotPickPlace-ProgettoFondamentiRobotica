@@ -30,7 +30,6 @@ class TiagoHeadScanActionClient(Node):
         trajectories = []
 
         for pos in head_positions:
-            """Genera un messaggio di traiettoria per ogni posizione della testa."""
             goal_msg = FollowJointTrajectory.Goal() #goal message
             goal_msg.trajectory.joint_names = joint_names #messaggio di traiettoria
 
