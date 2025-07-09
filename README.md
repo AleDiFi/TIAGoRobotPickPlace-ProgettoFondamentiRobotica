@@ -1,4 +1,4 @@
-# ProgettoTIAGoRobotica
+# TIAGoRobotPickPlace
 
 ## Overview del Progetto
 ### Obiettivo:
